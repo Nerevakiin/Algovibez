@@ -1,0 +1,36 @@
+//@version=5
+strategy("LT MA Cross", default_qty_type = strategy.percent_of_equity, default_qty_value = 100, overlay=true)
+
+lvg = input.float(defval=1, step = 0.05, title = "Leverage")
+
+// MA Crossover parameters
+fastLength = input(10, "Fast MA Length")
+slowLength = input(64, "Slow MA Length")
+
+// MA Crossover calculation
+fastMA = ta.ema(close, fastLength)
+slowMA = ta.ema(close, slowLength)
+
+// Buy condition: fast MA crosses above slow MA
+bcond = ta.crossover(fastMA, slowMA)
+
+// Sell condition: fast MA crosses below slow MA  
+scond = ta.crossunder(fastMA, slowMA)
+
+// Options that configure the backtest date range
+startDate = input.time(title='Start Date', defval=timestamp('01 Jan 2006 00:00'))
+endDate = input.time(title='End Date', defval=timestamp('31 Dec 2170 23:59'))
+
+contracts = strategy.equity/close
+inDateRange = time >= startDate and time < endDate
+
+// Entry and exit logic
+if bcond and inDateRange
+    strategy.entry("MACrossLE", strategy.long, comment="MACrossLE", qty = contracts*lvg)
+
+if scond and inDateRange
+    strategy.close("MACrossLE")
+
+// Plot MAs
+plot(fastMA, color = color.blue, linewidth = 1, title = "Fast MA")
+plot(slowMA, color = color.orange, linewidth = 1, title = "Slow MA")
